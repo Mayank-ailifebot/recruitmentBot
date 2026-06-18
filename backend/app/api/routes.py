@@ -7,11 +7,15 @@ are registered here as they are built in each sprint.
 
 from fastapi import APIRouter
 from app.api.health import router as health_router
+from app.api.llm_routes import router as llm_router
 
 api_router = APIRouter()
 
 # ── Core ──
 api_router.include_router(health_router)
+
+# ── Sprint 0.3: LLM Gateway ──
+api_router.include_router(llm_router)
 
 # ── Phase 1: Sourcing & Job Distribution ──
 # api_router.include_router(requisition_router, prefix="/requisitions")

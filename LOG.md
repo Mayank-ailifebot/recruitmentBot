@@ -85,4 +85,58 @@ This document tracks the chronological progress of the RecruitBot implementation
     *   Built and verified a `pgvector` cosine similarity sanity test comparing top employees against candidate resumes.
 
 ---
-*Log ends here. Ready for Sprint 0.3.*
+## Phase 0 — Sprint 0.3: LLM Gateway & Guardrail Scaffold
+
+**Date:** 2026-06-18
+**Focus:** Unified Multi-Provider LLM Gateway, Prompt Registry, Telemetry & PII Anonymization
+
+*   **Package Selection & Installation:**
+    *   Chose **LiteLLM** as the multi-provider gateway (supports 100+ providers including Anthropic, Google, OpenAI via a unified API).
+    *   Chose **Instructor** for structured JSON output enforcement (validates LLM responses against Pydantic schemas).
+    *   Installed `litellm`, `instructor`, and `tenacity` (retry logic).
+
+*   **Config Updates (`app/core/config.py`):**
+    *   Pinned model IDs in config using LiteLLM's `provider/model` format:
+        *   **Premium tier:** `anthropic/claude-sonnet-4-20250514` (JD generation, screening, snapshots).
+        *   **Fast tier:** `anthropic/claude-haiku-4-5-20251001` (parsing, classification).
+        *   **Fallback:** `gemini/gemini-2.0-flash` (used when primary provider fails).
+    *   Added API key support for Anthropic, Gemini, and OpenAI — switching providers is a one-line config change.
+
+*   **Prompt Template Registry (`app/core/prompts.py`):**
+    *   Built a centralized, versioned prompt management system.
+    *   Registered 5 SOW-aligned prompt templates:
+        1.  `jd_generation:v1` — Inclusive JD generation from manager briefs.
+        2.  `resume_parsing:v1` — Structured data extraction from resumes.
+        3.  `fit_score_evaluation:v1` — 30/40/30 weighted scoring (bias-blind).
+        4.  `interview_followup:v1` — Dynamic follow-up question generation.
+        5.  `candidate_snapshot:v1` — Vibe Check + Red Flags + Top 3 Reasons summary.
+
+*   **LLM Gateway Service (`app/services/llm.py`):**
+    *   Created the `LLMGateway` class — single audited chokepoint for ALL model traffic.
+    *   `generate()` — text generation with automatic fallback and telemetry.
+    *   `generate_structured()` — returns validated Pydantic model instances via Instructor.
+    *   Built-in retry logic, timeout handling, and provider failover.
+
+*   **PII Anonymization / AI Firewall (`app/services/anonymizer.py`):**
+    *   Regex-based anonymizer that strips emails, Indian phone numbers, Aadhaar, PAN, and URLs before sending text to external LLM APIs.
+    *   Tracks redaction counts for audit compliance.
+
+*   **Telemetry Service (`app/services/telemetry.py`):**
+    *   In-memory ring buffer logging every LLM call with: model, tokens, estimated cost (USD), latency, prompt metadata, and anonymization status.
+    *   Model-specific cost estimation using current provider pricing tables.
+    *   Aggregate stats endpoint for monitoring.
+
+*   **API Routes (`app/api/llm_routes.py`):**
+    *   `GET /api/v1/llm/models` — shows pinned model IDs per tier.
+    *   `GET /api/v1/llm/prompts` — lists all registered prompt templates.
+    *   `GET /api/v1/llm/telemetry/stats` — aggregate usage statistics.
+    *   `GET /api/v1/llm/telemetry/recent` — recent call events.
+    *   `POST /api/v1/llm/generate` — test generation endpoint (dev only).
+
+*   **Verification:**
+    *   Server starts cleanly with all new modules loaded.
+    *   All 5 API endpoints return correct responses.
+    *   Telemetry stats initialize at zero and are ready for live calls.
+
+---
+*Log ends here. Ready for Sprint 0.4.*
