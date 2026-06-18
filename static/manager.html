@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AILifeBot - Hiring Manager Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .pipeline-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+        .score-badge { background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 4px 10px; border-radius: 20px; font-weight: bold; font-size: 0.9em; }
+        .loader { display: none; border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid #6366f1; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    </style>
+</head>
+<body class="dark-theme">
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">⚡</div>
+                <div>
+                    <h2>Manager Hub</h2>
+                    <span class="subtitle">AILifeBot</span>
+                </div>
+            </div>
+            <nav>
+                <a href="#" class="active">🎯 Sourcing Pipeline</a>
+                <a href="/">🏠 Back to Demo Home</a>
+            </nav>
+            <div class="status-indicator">
+                <div class="dot active"></div> AI Engine Active
+            </div>
+        </aside>
+
+        <main class="content-area">
+            <header>
+                <h1>Autonomous Hiring Pipeline</h1>
+                <p>Describe your hiring need. The AI will write the JD, post it, analyze top internal performers, and source matching external candidates automatically.</p>
+            </header>
+
+            <div class="pipeline-card">
+                <h3>1. Initiate Requisition</h3>
+                <textarea id="hiringPrompt" placeholder="E.g., We need a Senior Life Insurance Sales Agent in Mumbai. They should have experience managing large teams and a consultative approach..."></textarea>
+                <button class="btn primary" onclick="runPipeline()">Deploy AI Orchestrator</button>
+                <div class="loader" id="pipelineLoader" style="margin-top: 15px;"></div>
+                <div id="statusText" style="margin-top: 10px; color: #a8b2d1; font-size: 0.9em;"></div>
+            </div>
+
+            <div id="resultsArea" style="display: none;">
+                <div class="grid-2">
+                    <div class="pipeline-card">
+                        <h3>Generated Job Description</h3>
+                        <div id="jdOutput" class="markdown-body" style="font-size: 0.9em; max-height: 300px; overflow-y: auto;"></div>
+                        <p style="color: #10b981; font-size: 0.8em; margin-top: 10px;">✓ Autonomously posted to Naukri & LinkedIn</p>
+                    </div>
+                    <div class="pipeline-card">
+                        <h3>High-Performer Archetype</h3>
+                        <p style="font-size: 0.85em; color: #a8b2d1;">Based on AILifeBot's top 10% employees.</p>
+                        <div id="archetypeOutput"></div>
+                    </div>
+                </div>
+
+                <div class="pipeline-card">
+                    <h3>Sourced Candidates (Look-Alike Match)</h3>
+                    <p style="font-size: 0.85em; color: #a8b2d1;">AI found these candidates mirroring our Archetype and autonomously sent warm outreach.</p>
+                    <div id="candidatesOutput" style="display: flex; flex-direction: column; gap: 15px; margin-top: 15px;"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        async function runPipeline() {
+            const prompt = document.getElementById('hiringPrompt').value;
+            if(!prompt) return alert("Please enter hiring requirements");
+            
+            document.getElementById('pipelineLoader').style.display = 'block';
+            document.getElementById('resultsArea').style.display = 'none';
+            const status = document.getElementById('statusText');
+            
+            status.innerText = "Writing JD and publishing to portals...";
+            
+            try {
+                const res = await fetch('/api/manager/pipeline', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({prompt: prompt})
+                });
+                
+                status.innerText = "Analyzing internal Top Performers to build Archetype...";
+                const data = await res.json();
+                
+                status.innerText = "Searching LinkedIn for Look-Alikes and sending outreach...";
+                
+                // Render JD
+                document.getElementById('jdOutput').innerText = data.job_description;
+                
+                // Render Archetype
+                let archHtml = `<p><strong>Summary:</strong> ${data.archetype.archetype_summary}</p>
+                                <div class="tags">`;
+                data.archetype.success_vectors.forEach(v => archHtml += `<span class="tag">${v}</span>`);
+                archHtml += `</div>`;
+                document.getElementById('archetypeOutput').innerHTML = archHtml;
+                
+                // Render Candidates
+                let candsHtml = "";
+                data.sourced_candidates.forEach(c => {
+                    candsHtml += `
+                    <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; border-left: 3px solid #6366f1;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <h4>${c.name} <span class="score-badge">${c.match_score}% Match</span></h4>
+                        </div>
+                        <p style="font-size: 0.85em; color: #fbbf24; margin: 5px 0;">🚨 Signal: ${c.churn_signal}</p>
+                        <div style="background: rgba(99, 102, 241, 0.1); padding: 10px; border-radius: 6px; font-size: 0.85em; margin-top: 10px;">
+                            <strong>AI Outreach Sent:</strong> "${c.outreach_message}"
+                        </div>
+                    </div>`;
+                });
+                document.getElementById('candidatesOutput').innerHTML = candsHtml;
+                
+                document.getElementById('pipelineLoader').style.display = 'none';
+                status.innerText = "Pipeline complete!";
+                document.getElementById('resultsArea').style.display = 'block';
+                
+            } catch (err) {
+                alert("Error: " + err);
+                document.getElementById('pipelineLoader').style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

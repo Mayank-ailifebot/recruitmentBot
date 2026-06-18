@@ -1,0 +1,56 @@
+{
+  "top_performers": [
+    {
+      "id": "TP_001",
+      "name": "Arjun Patel",
+      "role": "Regional Sales Director",
+      "performance_rating": 4.9,
+      "career_dna": {
+        "previous_industry": "Pharma Sales",
+        "education": "MBA - IIM Indore",
+        "tenure_before_promotion_months": 18,
+        "style": "Consultative Selling"
+      }
+    },
+    {
+      "id": "TP_002",
+      "name": "Neha Gupta",
+      "role": "Senior Insurance Consultant",
+      "performance_rating": 4.8,
+      "career_dna": {
+        "previous_industry": "High-end Hospitality",
+        "education": "BBA - Symbiosis",
+        "tenure_before_promotion_months": 12,
+        "style": "Empathetic Relationship Building"
+      }
+    }
+  ],
+  "silver_medalists": [
+    {
+      "id": "SM_001",
+      "name": "Rajiv Menon",
+      "previous_stage": "Final Round - Q3 2025",
+      "reason_rejected": "Role was filled internally",
+      "background": "7 years in Retail Banking Sales, consistently hit 110% quota.",
+      "education": "MBA Finance"
+    }
+  ],
+  "passive_candidates": [
+    {
+      "id": "PC_001",
+      "name": "Priya Sharma",
+      "current_company": "PharmaCorp India",
+      "current_role": "Regional Sales Head",
+      "background": "Pharma Sales 6yr, MBA-IIM Indore",
+      "churn_signal": "3-year Work Anniversary - likely open to new roles"
+    },
+    {
+      "id": "PC_002",
+      "name": "Ananya Krishnan",
+      "current_company": "Taj Hotels",
+      "current_role": "Guest Relations Director",
+      "background": "Hospitality 7yr, BBA",
+      "churn_signal": "Recent company-wide restructuring at Taj"
+    }
+  ]
+}
