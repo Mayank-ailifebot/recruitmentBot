@@ -16,6 +16,7 @@ dist-ssr
 .vscode/*
 !.vscode/extensions.json
 .idea
+.claude/
 .DS_Store
 *.suo
 *.ntvs*
@@ -28,3 +29,6 @@ dist-ssr
 __pycache__
 *.pyc
 .env
+
+# UI screenshots (local only)
+screenshots/
