@@ -8,6 +8,8 @@ are registered here as they are built in each sprint.
 from fastapi import APIRouter
 from app.api.health import router as health_router
 from app.api.llm_routes import router as llm_router
+from app.api.auth_routes import router as auth_router
+from app.api.requisition_routes import router as requisition_router
 
 api_router = APIRouter()
 
@@ -17,8 +19,12 @@ api_router.include_router(health_router)
 # ── Sprint 0.3: LLM Gateway ──
 api_router.include_router(llm_router)
 
+# ── Sprint 0.4: Auth & Requisitions ──
+api_router.include_router(auth_router)
+api_router.include_router(requisition_router)
+
 # ── Phase 1: Sourcing & Job Distribution ──
-# api_router.include_router(requisition_router, prefix="/requisitions")
+# api_router.include_router(sourcing_router, prefix="/sourcing")
 # api_router.include_router(sourcing_router, prefix="/sourcing")
 
 # ── Phase 2: Screening & Assessments ──

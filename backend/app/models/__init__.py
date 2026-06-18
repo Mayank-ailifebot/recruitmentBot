@@ -339,3 +339,27 @@ class AuditLog(Base):
         Index("idx_audit_actor", "actor_id"),
         Index("idx_audit_created", "created_at"),
     )
+
+
+# ══════════════════════════════════════════════════════════════
+# 10. USERS — Authentication & role-based access (Sprint 0.4)
+# ══════════════════════════════════════════════════════════════
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=gen_uuid)
+    email = Column(String(255), unique=True, nullable=False, index=True)
+    hashed_password = Column(String(255), nullable=False)
+    first_name = Column(String(100), nullable=False)
+    last_name = Column(String(100), nullable=False)
+
+    # Role: hiring_manager, recruiter, candidate
+    role = Column(String(30), nullable=False, default="candidate")
+
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), default=utcnow)
+    updated_at = Column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
+
+    __table_args__ = (
+        Index("idx_users_role", "role"),
+    )

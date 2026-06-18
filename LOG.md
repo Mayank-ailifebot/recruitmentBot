@@ -138,5 +138,54 @@ This document tracks the chronological progress of the RecruitBot implementation
     *   All 5 API endpoints return correct responses.
     *   Telemetry stats initialize at zero and are ready for live calls.
 
+
 ---
-*Log ends here. Ready for Sprint 0.4.*
+## Phase 0 — Sprint 0.4: Auth, Roles & First Real Wiring
+
+**Date:** 2026-06-18
+**Focus:** JWT Authentication, Role-Based Access Control, and First Real API Round-Trip
+
+*   **Package Selection:**
+    *   Used `python-jose[cryptography]` for JWT token creation/validation.
+    *   Used `bcrypt` directly for password hashing (passlib has compatibility issues with bcrypt>=5.0).
+    *   Decision: built own JWT auth for now (no external OIDC dependency). Designed for easy swap to Auth0/Keycloak later — only token issuance changes.
+
+*   **User Model & Migration (`app/models/__init__.py`):**
+    *   Added `User` model (table #10) with: `id`, `email`, `hashed_password`, `first_name`, `last_name`, `role`, `is_active`.
+    *   Generated and applied Alembic migration `add_users_table`.
+
+*   **Auth Service (`app/core/auth.py`):**
+    *   `hash_password()` — bcrypt hashing for secure storage.
+    *   `verify_password()` — bcrypt verification at login.
+    *   `create_access_token()` — JWT with `sub`, `email`, `role`, `exp`, `iat` claims.
+    *   `decode_access_token()` — JWT validation.
+
+*   **Auth Dependencies (`app/core/dependencies.py`):**
+    *   `get_current_user` — FastAPI dependency that extracts and validates JWT from `Authorization: Bearer` header.
+    *   `require_role("hiring_manager", "recruiter")` — factory that enforces role-based access per endpoint.
+
+*   **Auth API Routes (`app/api/auth_routes.py`):**
+    *   `POST /auth/register` — create user with role, returns JWT immediately.
+    *   `POST /auth/login` — authenticate and return JWT.
+    *   `GET /auth/me` — protected endpoint returning current user info.
+
+*   **Requisition Routes (`app/api/requisition_routes.py`) — First Real Wiring:**
+    *   `POST /requisitions` — Hiring Manager submits a job brief. The backend:
+        1.  Validates role (only `hiring_manager` and `recruiter` allowed).
+        2.  Attempts LLM JD generation via the Gateway (gracefully stubs if no API key).
+        3.  Saves to `job_requisitions` table with `hiring_manager_id` from JWT.
+        4.  Creates an `audit_log` entry tracking who created what.
+    *   `GET /requisitions` — list all requisitions (any authenticated user).
+    *   `GET /requisitions/{id}` — single requisition detail (any authenticated user).
+
+*   **E2E Verification (7 tests, all passed ✅):**
+    1.  ✅ Register Hiring Manager → `201 Created` with JWT.
+    2.  ✅ `GET /auth/me` with JWT → returns user profile.
+    3.  ✅ `POST /requisitions` with JWT → `201 Created`, saved to DB, audit logged.
+    4.  ✅ `GET /requisitions` with JWT → lists 4 requisitions (3 seed + 1 new).
+    5.  ✅ Register Candidate → `201 Created`.
+    6.  ✅ Candidate tries `POST /requisitions` → `403 Forbidden` (role enforced).
+    7.  ✅ No auth `GET /requisitions` → `401 Unauthorized`.
+
+---
+*Log ends here. Ready for Phase 1.*
